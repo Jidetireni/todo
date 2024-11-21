@@ -12,7 +12,7 @@ type FileManager struct {
 	outputFile string
 }
 
-func (fm *FileManager) ReadTasksToFIle(tasks interface{}) error {
+func (fm *FileManager) ReadTasksToFile(tasks interface{}) error {
 	file, err := os.Open(fm.inputFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -35,7 +35,7 @@ func (fm *FileManager) WriteTaskToFile(tasks interface{}) error {
 	file, err := os.OpenFile(fm.outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 
 	if err != nil {
-		return errors.New("failed to create file")
+		return errors.New("failed to open file")
 	}
 	defer file.Close()
 
