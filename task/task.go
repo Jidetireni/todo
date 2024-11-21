@@ -10,34 +10,33 @@ import (
 )
 
 type Manager interface {
-	ReadTasksToFIle(paste interface{}) error
+	ReadTasksToFile(paste interface{}) error
 	WriteTaskToFile(filedata interface{}) error
 }
 
 type task struct {
-	id         int       `json:"id"`
-	actions    string    `json:"task"`
-	status     bool      `json:"status"`
-	createdAt  time.Time `json:"created"`
-	finishedAt time.Time `json:"finished"`
+	Id         int       `json:"id"`
+	Actions    string    `json:"task"`
+	Status     bool      `json:"status"`
+	CreatedAt  time.Time `json:"created"`
+	FinishedAt time.Time `json:"finished"`
 }
 
 type todo struct {
 	tasks map[int]task
-	// date  time.Time
-	Io Manager
+	Io    Manager
 }
 
 func (t *todo) Add(action string) (int, error) {
 
 	newTasks := task{
-		id:        len(t.tasks) + 1,
-		actions:   action,
-		status:    false,
-		createdAt: time.Now(),
+		Id:        len(t.tasks) + 1,
+		Actions:   action,
+		Status:    false,
+		CreatedAt: time.Now(),
 	}
 
-	t.tasks[newTasks.id] = newTasks
+	t.tasks[newTasks.Id] = newTasks
 	fmt.Println("Tasks before writing to file:", t.tasks)
 
 	err := t.Io.WriteTaskToFile(t.tasks)
@@ -45,7 +44,7 @@ func (t *todo) Add(action string) (int, error) {
 		return 0, err
 	}
 
-	return newTasks.id, nil
+	return newTasks.Id, nil
 }
 
 func (t *todo) List() {
@@ -55,13 +54,13 @@ func (t *todo) List() {
 
 	for id, task := range t.tasks {
 		finishedTime := "N/A"
-		if task.status {
-			finishedTime = task.finishedAt.Format("2006-01-02 15:04:05")
+		if task.Status {
+			finishedTime = task.FinishedAt.Format("2006-01-02 15:04:05")
 		}
 		fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%s\n",
 			id,
-			task.actions, map[bool]string{true: "Done", false: "Pending"}[task.status],
-			task.createdAt.Format("2006-01-02 15:04:05"),
+			task.Actions, map[bool]string{true: "Done", false: "Pending"}[task.Status],
+			task.CreatedAt.Format("2006-01-02 15:04:05"),
 			finishedTime,
 		)
 	}
@@ -74,8 +73,8 @@ func (t *todo) Done(id int) (bool, error) {
 	if !exists {
 		return false, fmt.Errorf("task with id %d not found", id)
 	}
-	task.status = true
-	task.finishedAt = time.Now()
+	task.Status = true
+	task.FinishedAt = time.Now()
 
 	t.tasks[id] = task
 	err := t.Io.WriteTaskToFile(t.tasks)
@@ -83,7 +82,7 @@ func (t *todo) Done(id int) (bool, error) {
 		return false, err
 	}
 
-	return false, nil
+	return true, nil
 }
 
 func (t *todo) Delete(id int) error {
@@ -92,7 +91,7 @@ func (t *todo) Delete(id int) error {
 
 		reader := bufio.NewScanner(os.Stdin)
 
-		fmt.Printf("Are you sure you want to delete task '%v'? \n(yes/no) \n", task.actions)
+		fmt.Printf("Are you sure you want to delete task '%v'? \n(yes/no) \n", task.Actions)
 
 		if reader.Scan() {
 			choice := strings.TrimSpace(strings.ToLower(reader.Text()))
@@ -100,6 +99,7 @@ func (t *todo) Delete(id int) error {
 			switch choice {
 			case "yes", "y":
 				delete(t.tasks, id)
+				t.Io.WriteTaskToFile(t.tasks)
 				fmt.Println("Task deleted successfully.")
 				return nil
 			case "no", "n":
@@ -120,7 +120,7 @@ func (t *todo) GetTasks() map[int]task {
 }
 
 func (t *todo) LoadTasks() error {
-	return t.Io.ReadTasksToFIle(&t.tasks)
+	return t.Io.ReadTasksToFile(&t.tasks)
 }
 
 func (t *todo) PrintTasksFromFile() error {
